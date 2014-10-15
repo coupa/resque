@@ -142,6 +142,7 @@ module Resque
             srand # Reseeding
             procline "Forked #{@child} at #{Time.now.to_i}"
             begin
+              procline "#{Process.pid} returned with #{Process.waitpid(@child)}"
               Process.waitpid(@child)
             rescue SystemCallError
               nil
