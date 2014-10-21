@@ -141,9 +141,10 @@ module Resque
           if @child = fork(job)
             srand # Reseeding
             procline "Forked #{@child} at #{Time.now.to_i}"
+            log "Worker PID: #{Process.pid} Forked with #{job.inspect}"
             begin
-              procline "#{Process.pid} returned with #{Process.waitpid(@child)}"
-              Process.waitpid(@child)
+              waitpid = Process.waitpid(@child)
+              log "Return code for PID #{waitpid}: #{$?.exitstatus}"
             rescue SystemCallError
               nil
             end
