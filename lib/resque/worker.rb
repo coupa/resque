@@ -145,6 +145,7 @@ module Resque
             begin
               waitpid = Process.waitpid(@child)
               log "Return code for PID #{waitpid}: #{$?.exitstatus}"
+              waitpid
             rescue SystemCallError
               nil
             end
