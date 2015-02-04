@@ -237,11 +237,16 @@ module Resque
   # @param start [Integer]
   # @param count [Integer]
   # @return [Array<Hash<String,Object>]
+  # the negatives here are to maintain backwards compatability with the
+  # old API... giving you the first OUT of the queue
+  # the rpoplpush change necesitated changing the flow of messages from
+  # right-in left-out to left-in right-out
   def list_range(key, start = 0, count = 1)
+    start = -1 * (start+1)
     if count == 1
       decode(backend.store.lindex(key, start))
     else
-      Array(backend.store.lrange(key, start, start+count-1)).map do |item|
+      Array(backend.store.lrange(key, (start-count)+1, start)).reverse.map do |item|
         decode(item)
       end
     end
