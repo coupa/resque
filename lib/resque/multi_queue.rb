@@ -63,7 +63,7 @@ module Resque
         queue_names = @queues.map {|queue| queue.redis_name }
         if queue_names.any?
           synchronize do
-            value = @redis.blpop(*(queue_names + [1])) until value
+            value = @redis.brpop(*(queue_names + [1])) until value
             queue_name, payload = value
           queue = @queue_hash[queue_name]
             [queue, queue.decode(payload)]
@@ -82,7 +82,7 @@ module Resque
     def poll(timeout)
       queue_names = @queues.map {|queue| queue.redis_name }
       if queue_names.any?
-        queue_name, payload = @redis.blpop(*(queue_names + [timeout.to_i]))
+        queue_name, payload = @redis.brpop(*(queue_names + [timeout.to_i]))
         return unless payload
 
         synchronize do

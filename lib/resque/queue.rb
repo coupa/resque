@@ -42,7 +42,7 @@ module Resque
       end
 
       synchronize do
-        @redis.rpush @redis_name, encoded_object
+        @redis.lpush @redis_name, encoded_object
       end
     end
 
@@ -79,7 +79,7 @@ module Resque
         end
       else
         synchronize do
-          value = @redis.blpop(@redis_name, 1) until value
+          value = @redis.brpop(@redis_name, 1) until value
           decode value.last
         end
       end

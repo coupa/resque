@@ -199,6 +199,10 @@ module Resque
     nil
   end
 
+  def rpoplpush(queue, left_queue)
+    decode redis.rpoplpush("queue:#{queue}", left_queue)
+  end
+
   # Returns an integer representing the size of a queue.
   # Queue name should be a string.
   # @param queue (see #queue)
