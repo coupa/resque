@@ -139,14 +139,18 @@ module Resque
   # Returns nothing
   def push(queue, item)
     watch_queue(queue)
-    redis.rpush "queue:#{queue}", encode(item)
+    redis.lpush "queue:#{queue}", encode(item)
   end
 
   # Pops a job off a queue. Queue name should be a string.
   #
   # Returns a Ruby object.
   def pop(queue)
-    decode redis.lpop("queue:#{queue}")
+    decode redis.rpop("queue:#{queue}")
+  end
+
+  def rpoplpush(queue, left_queue)
+    decode redis.rpoplpush("queue:#{queue}", left_queue)
   end
 
   # Returns an integer representing the size of a queue.
@@ -301,7 +305,7 @@ module Resque
   #
   # This method is considered part of the `stable` API.
   def reserve(queue)
-    Job.reserve(queue)
+    Job.reliable_reserve(queue, "accepted")
   end
 
   # Validates if the given klass could be a valid Resque job

@@ -97,7 +97,13 @@ module Resque
     # Given a string queue name, returns an instance of Resque::Job
     # if any jobs are available. If not, returns nil.
     def self.reserve(queue)
-      return unless payload = Resque.pop(queue)
+      reliable_reserve(queue, 'accepted')
+    end
+
+    # given a string queue name and a string backup_queue returns and instance of Resque::Job
+    # jobs are atomically popped off the main queue and added to the backup_queue
+    def self.reliable_reserve(queue, left_queue)
+      return unless payload = Resque.rpoplpush(queue, left_queue)
       new(queue, payload)
     end
 
