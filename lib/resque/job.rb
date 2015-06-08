@@ -97,7 +97,7 @@ module Resque
     # Given a string queue name, returns an instance of Resque::Job
     # if any jobs are available. If not, returns nil.
     def self.reserve(queue)
-      reliable_reserve(queue, 'accepted')
+      reliable_reserve(queue, ':resque:accepted')
     end
 
     # given a string queue name and a string backup_queue returns and instance of Resque::Job

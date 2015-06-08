@@ -44,8 +44,31 @@ context "Resque" do
     assert_equal SomeJob, job.payload_class
     assert_equal 20, job.args[0]
     assert_equal '/tmp', job.args[1]
+    assert_equal Resque.redis.llen('accepted'), 1
   end
 
+  test "will update resque:accepted even when namespace is set" do
+    # Keep top-level redis
+    redis_ns = Resque.redis
+    
+    # Change the namespace
+    new_redis = Redis.new(:host => "localhost", :port => 9736)
+    new_namespace = Redis::Namespace.new("namespace", :redis => new_redis)
+    Resque.redis = new_namespace
+    assert_equal new_namespace, Resque.redis
+    Resque.redis = 'localhost:9736/namespace'
+    
+    # Create and grab the job from the namespace
+    Resque::Job.create(:jobs, 'some-job', 20, '/tmp')
+    job = Resque.reserve(:jobs)
+    
+    # Check that we copied the job to resque:accepted
+    assert_equal redis_ns.llen('accepted'), 1
+    
+    # Check that we did not copy the job to resque:namespace:accepted
+    assert_equal Resque.redis.llen('accepted'), 0
+  end
+  
   test "can re-queue jobs" do
     Resque::Job.create(:jobs, 'some-job', 20, '/tmp')
 

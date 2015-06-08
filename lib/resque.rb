@@ -1,4 +1,4 @@
-require 'redis/namespace'
+require 'resque/namespace'
 
 require 'resque/version'
 
@@ -305,7 +305,7 @@ module Resque
   #
   # This method is considered part of the `stable` API.
   def reserve(queue)
-    Job.reliable_reserve(queue, "accepted")
+    Job.reliable_reserve(queue, ":resque:accepted")
   end
 
   # Validates if the given klass could be a valid Resque job
