@@ -265,6 +265,35 @@ module Resque
     register_hook(:after_fork, block)
   end
 
+  # The `before_waitpid` hook will be run in the **parent** process
+  # before every job, so be careful- any changes you make will be
+  # permanent for the lifespan of the worker.
+  #
+  # Call with a block to register a hook.
+  # Call with no arguments to return all registered hooks.
+  def before_waitpid(&block)
+    block ? register_hook(:before_waitpid, block) : hooks(:before_waitpid)
+  end
+
+  # Register a before_waitpid proc.
+  def before_waitpid=(block)
+    register_hook(:before_waitpid, block)
+  end
+
+  # The `after_waitpid` hook will be run in the **parent** process and is passed
+  # the current job and the exit status. The exit status could be nil.
+  #
+  # Call with a block to register a hook.
+  # Call with no arguments to return all registered hooks.
+  def after_waitpid(&block)
+    block ? register_hook(:after_waitpid, block) : hooks(:after_waitpid)
+  end
+
+  # Register an after_waitpid proc.
+  def after_waitpid=(block)
+    register_hook(:after_waitpid, block)
+  end
+
   # The `before_pause` hook will be run in the parent process before the
   # worker has paused processing (via #pause_processing or SIGUSR2).
   def before_pause(&block)
