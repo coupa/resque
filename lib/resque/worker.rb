@@ -215,10 +215,14 @@ module Resque
           if @child = fork(job)
             srand # Reseeding
             procline "Forked #{@child} at #{Time.now.to_i}"
+            status = nil
             begin
-              Process.waitpid(@child)
+              run_hook :before_waitpid, job, @child
+              _, status = Process.waitpid2(@child)
             rescue SystemCallError
               nil
+            ensure
+              run_hook :after_waitpid, job, status
             end
             job.fail(DirtyExit.new("Child process received unhandled signal #{$?.stopsig}")) if $?.signaled?
           else
