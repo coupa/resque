@@ -324,7 +324,7 @@ module Resque
     def reconnect
       tries = 0
       begin
-        redis.client.reconnect
+        redis._client.reconnect
       rescue Redis::BaseConnectionError
         if (tries += 1) <= 3
           log_with_severity :error, "Error reconnecting to Redis; retrying"
