@@ -17,11 +17,22 @@ module Resque
     WORKER_HEARTBEAT_KEY = "workers:heartbeat"
 
     def redis
-      Resque.redis
+      self.class.redis
     end
 
     def self.redis
-      Resque.redis
+      return @redis if @redis
+      # Dont wanna return Resque.redis as default. Resque.redis can point to either redis v3 or redis v6.
+      raise 'Please set the redis via Resque::Worker.redis= before calling this method'
+    end
+
+    def self.redis=(server)
+      case server
+      when Redis::Namespace
+        @redis = server
+      else
+        raise ArgumentError, 'Argument should be of type Redis::Namespace'
+      end
     end
 
     # Given a Ruby object, returns a string suitable for storage in a
@@ -306,7 +317,7 @@ module Resque
     def reserve
       queues.each do |queue|
         log_with_severity :debug, "Checking #{queue}"
-        if job = Resque.reserve(queue)
+        if job = fetch_job(queue)
           log_with_severity :debug, "Found job on #{queue}"
           return job
         end
@@ -317,6 +328,13 @@ module Resque
       log_with_severity :error, "Error reserving job: #{e.inspect}"
       log_with_severity :error, e.backtrace.join("\n")
       raise e
+    end
+
+    # Given a string queue name, returns an instance of Resque::Job
+    # if any jobs are available. If not, returns nil.
+    def fetch_job(queue)
+      return unless payload = decode(redis.lpop("queue:#{queue}"))
+      Resque::Job.new(queue, payload)
     end
 
     # Reconnect to Redis to avoid sharing a connection with the parent,
