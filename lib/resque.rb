@@ -512,7 +512,7 @@ module Resque
   def info
     return {
       :pending   => queue_sizes.inject(0) { |sum, (queue_name, queue_size)| sum + queue_size },
-      :processed => Stat[:processed],
+      :processed => Stat.get(Resque.redis, :processed),
       :queues    => queues.size,
       :workers   => workers.size.to_i,
       :working   => working.size,

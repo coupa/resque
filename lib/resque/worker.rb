@@ -188,7 +188,7 @@ module Resque
     end
 
     def glob_match(pattern)
-      Resque.queues.select do |queue|
+      Array(redis.smembers(:queues)).select do |queue|
         File.fnmatch?(pattern, queue)
       end.sort
     end
@@ -501,8 +501,8 @@ module Resque
     # Returns a list of workers that have sent a heartbeat in the past, but which
     # already expired (does NOT include workers that have never sent a heartbeat at all).
     def self.all_workers_with_expired_heartbeats
-      workers = Worker.all
-      heartbeats = Worker.all_heartbeats
+      workers = self.all
+      heartbeats = self.all_heartbeats
 
       workers.select do |worker|
         id = worker.to_s
@@ -584,11 +584,11 @@ module Resque
     # By checking the current Redis state against the actual
     # environment, we can determine if Redis is old and clean it up a bit.
     def prune_dead_workers
-      all_workers = Worker.all
+      all_workers = self.class.all
 
       unless all_workers.empty?
         known_workers = worker_pids
-        all_workers_with_expired_heartbeats = Worker.all_workers_with_expired_heartbeats
+        all_workers_with_expired_heartbeats = self.class.all_workers_with_expired_heartbeats
       end
 
       all_workers.each do |worker|
@@ -674,8 +674,8 @@ module Resque
         redis.del("worker:#{self}:started")
         redis.hdel(WORKER_HEARTBEAT_KEY, self.to_s)
 
-        Stat.clear("processed:#{self}")
-        Stat.clear("failed:#{self}")
+        Stat.clear(redis, "processed:#{self}")
+        Stat.clear(redis, "failed:#{self}")
       end
     rescue Exception => exception_while_unregistering
       message = exception_while_unregistering.message
@@ -709,24 +709,24 @@ module Resque
 
     # How many jobs has this worker processed? Returns an int.
     def processed
-      Stat["processed:#{self}"]
+      Stat[redis, "processed:#{self}"]
     end
 
     # Tell Redis we've processed a job.
     def processed!
-      Stat << "processed"
-      Stat << "processed:#{self}"
+      Stat.incr(redis, "processed")
+      Stat.incr(redis, "processed:#{self}")
     end
 
     # How many failed jobs has this worker seen? Returns an int.
     def failed
-      Stat["failed:#{self}"]
+      Stat[redis, "failed:#{self}"]
     end
 
     # Tells Redis we've failed a job.
     def failed!
-      Stat << "failed"
-      Stat << "failed:#{self}"
+      Stat.incr(redis, "failed")
+      Stat.incr(redis, "failed:#{self}")
     end
 
     # What time did this worker start? Returns an instance of `Time`
